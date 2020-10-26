@@ -47,15 +47,15 @@ app.post('/users/adduser', (req,res) => {
                     service: 'gmail',
                     host: 'smtp.gmail.com',
                     auth: {
-                      user: 'practirio@gmail.com',
-                      pass: 'cqccncsmeyuvzjyb'
+                      user: 'whiskerdevs@gmail.com',
+                      pass: 'ckhshfqjmofjskoi'
                     }
                   }));
                   let mailOptions = {
-                    from: 'Practrio <no-reply@practirio.com>',
+                    from: 'Whisker <no-reply@whiskerapp.org>',
                     to: req.body.email,
-                    subject: 'Verify your Practirio Account',
-                    html: fs.readFileSync('./verifyEmail.html', { encoding: 'utf-8'}).replace('VERIFYURL', 'https://practirio.com/verify?vid=' + verifyId)
+                    subject: 'Verify your Whisker Account',
+                    html: fs.readFileSync('./verifyEmail.html', { encoding: 'utf-8'}).replace('VERIFYURL', 'https://www.whiskerapp.org/verify?vid=' + verifyId)
                     .replace('FIRSTNAME', userDoc.firstname).replace('LASTNAME', userDoc.lastname)
                   };
                   transporter.sendMail(mailOptions, function(error, info){
