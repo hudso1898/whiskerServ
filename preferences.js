@@ -32,16 +32,17 @@ function preferences(app, dbName, uri) {
             res.status(400).send({ok: false, message: "Must supply uid, sid, and preferences object"});
             return;
         }
-        mongoclient.connect(uri).then((err, db) => {
+	console.log(uri);
+        mongoclient.connect(uri, (err,db) => {
             if (err) {
                 res.status(500).send({ok: false, message: "DB connection failed"});
-                db.close();
                 return;
             }
-            db.collection('users').find({id: req.body.uid, currentSessionId: req.body.sid}).toArray((err, result) => {
+		var dbo = db.db(dbName);
+            dbo.collection('users').find({id: req.body.uid, currentSessionId: req.body.sid}).toArray((err, result) => {
                 if (result && result.length !== 0 && new Date(result[0].expDate).getTime() > Date.now()) {
                     let user = result[0];
-                    db.collection('users').updateOne({id: req.body.ud}, {$set: { preferences: req.body.preferences }}, (err, result2) => {
+                    dbo.collection('users').updateOne({id: req.body.uid}, {$set: { preferences: req.body.preferences }}, (err, result2) => {
                         res.status(200).send({ok: true});
                         db.close();
                     });

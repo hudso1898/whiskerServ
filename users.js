@@ -21,7 +21,7 @@ app.post('/users/adduser', (req,res) => {
         }
         else {
             var dbo = db.db(dbName);
-            dbo.collection('users').find({ $or: [ { username: req.body.username }, {email: req.body.email}]}).toArray((err, result) => {
+		dbo.collection('users').find({ $or: [ { username: req.body.username }, {email: req.body.email}]}).toArray((err, result) => {
 	    
             if (result.length !== 0) {
                 res.status(400).send({error: 'This username or email is already in use!'});
@@ -192,7 +192,7 @@ app.post('/users/login', (req,res) => {
 				}
 				else {
                             let sessionId;
-				if (user.currentSessionId !== undefined && user.expDate > Date.now()) {
+				if (user.currentSessionId !== undefined && user.expDate.getTime() > Date.now()) {
 					sessionId = user.currentSessionId;
 				}
 				else {
