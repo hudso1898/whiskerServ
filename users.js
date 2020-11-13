@@ -73,6 +73,48 @@ app.post('/users/adduser', (req,res) => {
 	}
     });
 });
+
+// provider apply
+app.post('/apply/provider', (req,res) => {
+    mongoclient.connect(uri, (err,db) => {
+        if (err) {
+            res.contentType('application/json').status(500).send('DB connection failed');
+        }
+        else {
+            var dbo = db.db(dbName);
+            let provApplication = Object.assign(req.body, {
+                id: idGen.generateSessionId()
+            });
+            dbo.collection('providerApplications').insertOne(provApplication, (err,result) => {
+                if (err) throw err;
+                let transporter =  nodemailer.createTransport(smtpTransport({
+                    service: 'gmail',
+                    host: 'smtp.gmail.com',
+                    auth: {
+                      user: 'whiskerdevs@gmail.com',
+                      pass: 'ckhshfqjmofjskoi'
+                    }
+                  }));
+                  let mailOptions = {
+                    from: 'Whisker <no-reply@whiskerapp.org>',
+                    to: 'whiskerdevs@gmail.com',
+                    subject: 'New Provider Application - ' + req.body.name,
+                    html: fs.readFileSync('./provApplication.html', { encoding: 'utf-8'}).replace('DETAILS', JSON.stringify(provApplication, undefined, 1))
+                  };
+                  transporter.sendMail(mailOptions, function(error, info){
+                    if (error) {
+                        res.status(404).send({ success: false, message: "Error connecting to mail server!" });
+                    } else {
+                        res.status(200).send({ success: true });
+                    }
+                    res.end();
+                  });
+                db.close();
+            });
+        }
+	});
+});
+
 app.post('/verifyUser', (req,res) => {
     mongoclient.connect(uri, (err, db) => {
         if (err) {

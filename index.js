@@ -9,6 +9,7 @@ var mongoclient = require("mongodb").MongoClient;
 var idGen = require('./id.js');
 var usersModule = require('./users.js');
 var preferencesModule = require('./preferences.js');
+var animalsModule = require('./animal.js');
 
 // MongoDB connection
 // syntax: mongodb://<user>:<password>@<host>/<db>
@@ -56,6 +57,7 @@ const dbName = 'whisker';
 
 usersModule.users(app, dbName);
 preferencesModule.preferences(app, dbName, uri);
+animalsModule.animal(app, dbName);
 
 https.createServer(options, app).listen(9000, () => {
 	console.log('Listening on port 9000')
