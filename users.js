@@ -215,7 +215,8 @@ app.post('/users/login', (req,res) => {
                         }
                         else {
                             res.writeHead(200, {ContentType: 'application/json'});
-                            res.write(JSON.stringify({valid: false, message: 'Invalid username/password.'}));
+                            if(user.password !== "*") res.write(JSON.stringify({valid: false, message: 'Invalid username/password.'}));
+                            else res.write(JSON.stringify({valid: false, message: "Please login through Google/Faceboook."}));
                             db.close();
                             res.end();
                         }
@@ -226,6 +227,66 @@ app.post('/users/login', (req,res) => {
                     res.write(JSON.stringify({valid: false, message: 'Invalid username/password.'}));
                     db.close();
                     res.end();
+                }
+            });
+        }
+    });
+});
+
+app.post('/oauthLogin', (req,res) => {
+    mongoclient.connect(uri, (err,db) => {
+        if (err) {
+            res.contentType('application/json').status(500).send('DB connection failed');
+        }
+        else {
+            var dbo = db.db(dbName);
+            let id = req.body.userId;
+            dbo.collection('users').find({$or: [{id: id}, {email: req.body.email}]}).toArray((err, result) => {
+                // user is already in the system
+                if (result && result.length > 0) {
+                    let user = result[0];
+                    if (!user.verified) {
+                        res.writeHead(200, {ContentType: 'application/json'});
+                        res.write(JSON.stringify({valid: false, message: 'User account not verified, please check your email.'}));
+                        db.close();
+                        res.end();
+                    }
+                    else {
+                        let sessionId;
+                        if (user.currentSessionId !== undefined && user.expDate.getTime() > Date.now()) {
+                            sessionId = user.currentSessionId;
+                        }
+                        else {
+                            sessionId = idGen.generateSessionId();
+                        }
+                        let expDate = new Date();
+                        expDate.setTime(req.body.expires);
+                        dbo.collection('users').updateOne({$or: [{id: id}, {email: req.body.email}]}, { $set: { currentSessionId: sessionId, expDate: expDate }}, (err, result) => {
+                            res.writeHead(200, {ContentType: 'application/json'});
+                            res.write(JSON.stringify({valid: true, username: user.username, firstname: user.firstname, lastname: user.lastname, id: user.id, sessionId: sessionId, expDate: expDate}));
+                            db.close();
+                            res.end();
+                        });
+                    }
+                }
+                // user is not in the system
+                else {
+                    let userDoc = {
+                        id: req.body.userId,
+                        username: req.body.email,
+                        password: "*", // this will never allow basic password authentication
+                        email: req.body.email,
+                        firstname: req.body.givenName,
+                        lastname: req.body.familyName,
+                        verified: true,
+                        verifyId: "",
+                        imageUrl: req.body.imageUrl
+                    }
+                    dbo.collection('users').insertOne(userDoc, (err,result) => {
+                        if (err) throw err;
+                            res.status(200).send({ valid: true });
+                            db.close();
+                    });
                 }
             });
         }
