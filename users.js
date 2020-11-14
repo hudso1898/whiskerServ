@@ -39,8 +39,55 @@ app.post('/users/adduser', (req,res) => {
                 verifyId: verifyId
             }
 
-            // todo
-            // need to update this to use whisker's account, not practirios
+            if (req.body.providerId) {
+                dbo.collection('providers').findOne({id: req.body.providerId}).toArray((err, result) => {
+                    if (result && result.length > 0) {
+                        res.status(200).send({ok: false, message: "No matching provider id"});
+                        db.close();
+                    }
+                    else {
+                        dbo.collection('users').findOne({providerId: req.body.providerId}).toArray((err, result2) => {
+                            if (result2 && result2.length > 0) {
+                                res.status(200).send({ok: false, message: "Provider user account already exists"});
+                                db.close();
+                            }
+                            else {
+                                userDoc = Object.assign(userDoc, {
+                                    providerId: req.body.providerId
+                                });
+                                dbo.collection('users').insertOne(userDoc, (err,result) => {
+                                    if (err) throw err;
+                                    let transporter =  nodemailer.createTransport(smtpTransport({
+                                        service: 'gmail',
+                                        host: 'smtp.gmail.com',
+                                        auth: {
+                                          user: 'whiskerdevs@gmail.com',
+                                          pass: 'ckhshfqjmofjskoi'
+                                        }
+                                      }));
+                                      let mailOptions = {
+                                        from: 'Whisker <no-reply@whiskerapp.org>',
+                                        to: req.body.email,
+                                        subject: 'Verify your Whisker Provider Account',
+                                        html: fs.readFileSync('./verifyEmail.html', { encoding: 'utf-8'}).replace('VERIFYURL', 'https://www.whiskerapp.org/verify?vid=' + verifyId)
+                                        .replace('FIRSTNAME', userDoc.firstname).replace('LASTNAME', userDoc.lastname)
+                                      };
+                                      transporter.sendMail(mailOptions, function(error, info){
+                                        if (error) {
+                                            res.status(404).send({ success: false, message: "Error connecting to mail server!" });
+                                        } else {
+                                            res.status(200).send({ success: true });
+                                        }
+                                        res.end();
+                                      });
+                                    db.close();
+                                });
+                            }  
+                        });
+                    }
+                });
+            }
+            else {
             dbo.collection('users').insertOne(userDoc, (err,result) => {
                 if (err) throw err;
                 let transporter =  nodemailer.createTransport(smtpTransport({
@@ -69,6 +116,7 @@ app.post('/users/adduser', (req,res) => {
                 db.close();
             });
             }
+        }
 	});
 	}
     });
@@ -83,7 +131,8 @@ app.post('/apply/provider', (req,res) => {
         else {
             var dbo = db.db(dbName);
             let provApplication = Object.assign(req.body, {
-                id: idGen.generateSessionId()
+                id: idGen.generateSessionId(),
+                pending: true
             });
             dbo.collection('providerApplications').insertOne(provApplication, (err,result) => {
                 if (err) throw err;
@@ -115,26 +164,68 @@ app.post('/apply/provider', (req,res) => {
 	});
 });
 
-app.post('/verifyUser', (req,res) => {
-    mongoclient.connect(uri, (err, db) => {
+// provider apply
+app.post('/apply/provider/accept', (req,res) => {
+    mongoclient.connect(uri, (err,db) => {
         if (err) {
             res.contentType('application/json').status(500).send('DB connection failed');
         }
         else {
             var dbo = db.db(dbName);
-            let provVerifyId = req.body.verifyId;
-            dbo.collection('users').find({ verifyId: provVerifyId }).toArray((err, result) => {
-                if(result && result.length > 0) {
-                    for (let user of result) {
-                        dbo.collection('users').updateOne({verifyId: provVerifyId}, { $set: {verified: true, verifyId: ''}}, (err, result2) => {
-                            res.contentType('application/json').status(200).send({ ok: true});
-                        });
-                    }
+            dbo.collection('users').find({id: req.body.uid, currentSessionId: req.body.sid, admin: true}).toArray((err, result) => {
+                if (result && result.length > 0) {
+                    dbo.collection('providerApplications').find({id: req.body.applicationId, pending: true}).toArray((err, result2) => {
+                        if (result2 && result2.length > 0) {
+                            let provDoc = result2[0];
+                            dbo.collection('providers').insertOne(provDoc, (err, result3) => {
+                                dbo.collection('providerApplications').updateOne({id: provDoc.id}, {$set: {pending: false}}, (err, result4) => {
+                                    res.status(200).send({ok: true, providerId: provDoc.id});
+                                    db.close();
+                                });
+                            });
+                        }
+                        else {
+                            res.status(200).send({ok: false, message: "No pending application for this provider"});
+                            db.close();
+                        }
+                    });
                 }
                 else {
-                    res.contentType('application/json').status(200).send({ ok: false});
+                    res.status(200).send({ok: false, message: "Invalid request credentials"});
+                    db.close();
                 }
-                db.close();
+            });
+        }
+    });
+});
+
+// provider deny
+app.post('/apply/provider/deny', (req,res) => {
+    mongoclient.connect(uri, (err,db) => {
+        if (err) {
+            res.contentType('application/json').status(500).send('DB connection failed');
+        }
+        else {
+            var dbo = db.db(dbName);
+            dbo.collection('users').find({id: req.body.uid, currentSessionId: req.body.sid, admin: true}).toArray((err, result) => {
+                if (result && result.length > 0) {
+                    dbo.collection('providerApplications').find({id: req.body.applicationId, pending: true}).toArray((err, result2) => {
+                        if (result2 && result2.length > 0) {
+                            dbo.collection('providerApplications').deleteOne({id: req.body.applicationId, pending: true}, (err, result3) => {
+                                res.status(200).send({ok: true});
+                                db.close();
+                            });
+                        }
+                        else {
+                            res.status(200).send({ok: false, message: "No pending application for this provider"});
+                            db.close();
+                        }
+                    });
+                }
+                else {
+                    res.status(200).send({ok: false, message: "Invalid request credentials"});
+                    db.close();
+                }
             });
         }
     });
