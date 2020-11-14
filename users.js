@@ -154,9 +154,8 @@ app.post('/apply/provider', (req,res) => {
                     if (error) {
                         res.status(404).send({ success: false, message: "Error connecting to mail server!" });
                     } else {
-                        res.status(200).send({ success: true });
+                        db.close();
                     }
-                    res.end();
                   });
                 db.close();
             });
@@ -179,7 +178,29 @@ app.post('/apply/provider/accept', (req,res) => {
                             let provDoc = result2[0];
                             dbo.collection('providers').insertOne(provDoc, (err, result3) => {
                                 dbo.collection('providerApplications').updateOne({id: provDoc.id}, {$set: {pending: false}}, (err, result4) => {
-                                    res.status(200).send({ok: true, providerId: provDoc.id});
+                                    let transporter =  nodemailer.createTransport(smtpTransport({
+                                        service: 'gmail',
+                                        host: 'smtp.gmail.com',
+                                        auth: {
+                                          user: 'whiskerdevs@gmail.com',
+                                          pass: 'ckhshfqjmofjskoi'
+                                        }
+                                      }));
+                                      let mailOptions = {
+                                        from: 'Whisker <no-reply@whiskerapp.org>',
+                                        to: provDoc.email,
+                                        subject: 'Your provider application has been approved!',
+                                        html: fs.readFileSync('./applicationApproved.html', { encoding: 'utf-8'}).replace('NAME', provDoc.name)
+                                        .replace('VERIFYURL', 'https://whiskerapp.org/register?pid=' + provDoc.id)
+                                      };
+                                      transporter.sendMail(mailOptions, function(error, info){
+                                        if (error) {
+                                            res.status(404).send({ success: false, message: "Error connecting to mail server!" });
+                                        } else {
+                                            res.status(200).send({ success: true });
+                                        }
+                                        res.end();
+                                      });
                                     db.close();
                                 });
                             });
