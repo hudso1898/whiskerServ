@@ -195,7 +195,7 @@ app.get('/applications/provider', (req,res) => {
             dbo.collection('users').find({id: req.body.uid, currentSessionId: req.body.sid, admin: true}).toArray((err, result) => {
                 if (result && result.length > 0) {
                     dbo.collection('providerApplications').find({pending: true}).toArray((err, result2) => {
-                        res.status(200).send(result2);
+                        res.status(200).send({ok: true, applications: result2});
                         db.close();
                     });
                 }
