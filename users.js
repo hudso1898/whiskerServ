@@ -185,7 +185,7 @@ app.post('/apply/provider', (req,res) => {
 
 
 // get applications
-app.get('/applications/provider', (req,res) => {
+app.post('/applications/provider', (req,res) => {
     mongoclient.connect(uri, (err,db) => {
         if (err) {
             res.contentType('application/json').status(500).send('DB connection failed');
