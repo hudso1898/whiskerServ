@@ -154,7 +154,27 @@ app.post('/apply/provider', (req,res) => {
                     if (error) {
                         res.status(404).send({ success: false, message: "Error connecting to mail server!" });
                     } else {
-                        db.close();
+                        let transporter =  nodemailer.createTransport(smtpTransport({
+                            service: 'gmail',
+                            host: 'smtp.gmail.com',
+                            auth: {
+                              user: 'whiskerdevs@gmail.com',
+                              pass: 'ckhshfqjmofjskoi'
+                            }
+                          }));
+                          let mailOptions = {
+                            from: 'Whisker <no-reply@whiskerapp.org>',
+                            to: provApplication.email,
+                            subject: 'Provider Application Confirmation',
+                            html: fs.readFileSync('./confirmApplication.html', { encoding: 'utf-8'}).replace('NAME', provApplication.name)
+                          };
+                          transporter.sendMail(mailOptions, function(error, info){
+                            if (error) {
+                                res.status(404).send({ success: false, message: "Error connecting to mail server!" });
+                            } else {
+                                res.status(200).send({ success: true });
+                            }
+                        });
                     }
                   });
                 db.close();
