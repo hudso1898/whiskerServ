@@ -183,6 +183,30 @@ app.post('/apply/provider', (req,res) => {
 	});
 });
 
+
+// get applications
+app.get('/applications/provider', (req,res) => {
+    mongoclient.connect(uri, (err,db) => {
+        if (err) {
+            res.contentType('application/json').status(500).send('DB connection failed');
+        }
+        else {
+            var dbo = db.db(dbName);
+            dbo.collection('users').find({id: req.body.uid, currentSessionId: req.body.sid, admin: true}).toArray((err, result) => {
+                if (result && result.length > 0) {
+                    dbo.collection('providerApplications').find({pending: true}).toArray((err, result2) => {
+                        res.status(200).send(result2);
+                        db.close();
+                    });
+                }
+                else {
+                    res.status(200).send({ok: false, message: "Invalid request credentials"});
+                    db.close();
+                }
+            });
+        }
+    });
+});
 // provider apply
 app.post('/apply/provider/accept', (req,res) => {
     mongoclient.connect(uri, (err,db) => {
