@@ -243,7 +243,6 @@ app.post('/apply/provider/accept', (req,res) => {
                                         } else {
                                             res.status(200).send({ success: true });
                                         }
-                                        res.end();
                                       });
                                     db.close();
                                 });
