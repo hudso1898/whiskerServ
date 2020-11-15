@@ -385,7 +385,7 @@ app.post('/users/login', (req,res) => {
                              } 
                             dbo.collection('users').updateOne({ $or: [ {username: provUsername}, {email: provUsername} ] }, { $set: { currentSessionId: sessionId, expDate: expDate }}, (err, result) => {
                                 res.writeHead(200, {ContentType: 'application/json'});
-                            res.write(JSON.stringify({valid: true, username: user.username, firstname: user.firstname, lastname: user.lastname, id: user.id, sessionId: sessionId, expDate: expDate, admin: (user.admin) ? user.admin : false, providerId: (user.providerId) ? user.providerId : undefined}));
+                            res.write(JSON.stringify({valid: true, username: user.username, firstname: user.firstname, lastname: user.lastname, id: user.id, sessionId: sessionId, expDate: expDate, preferences: (user.preferences) ? user.preferences : {}, admin: (user.admin) ? user.admin : false, providerId: (user.providerId) ? user.providerId : undefined}));
                             db.close();
                             res.end();
 			    });
