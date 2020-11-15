@@ -239,9 +239,9 @@ app.post('/apply/provider/accept', (req,res) => {
                                       };
                                       transporter.sendMail(mailOptions, function(error, info){
                                         if (error) {
-                                            res.status(404).send({ success: false, message: "Error connecting to mail server!" });
+                                            res.status(404).send({ ok: false, message: "Error connecting to mail server!" });
                                         } else {
-                                            res.status(200).send({ success: true });
+                                            res.status(200).send({ ok: true });
                                         }
                                       });
                                     db.close();
