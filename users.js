@@ -25,6 +25,7 @@ app.post('/users/adduser', (req,res) => {
 	    
             if (result.length !== 0) {
                 res.status(400).send({error: 'This username or email is already in use!'});
+                return;
             }
             else {
                 let verifyId = idGen.generateSessionId();
@@ -40,46 +41,26 @@ app.post('/users/adduser', (req,res) => {
             }
 
             if (req.body.providerId) {
-                dbo.collection('providers').findOne({id: req.body.providerId}).toArray((err, result) => {
-                    if (result && result.length > 0) {
+                dbo.collection('providers').find({id: req.body.providerId}).toArray((err, result) => {
+                    if (!result || result.length === 0) {
                         res.status(200).send({ok: false, message: "No matching provider id"});
                         db.close();
                     }
                     else {
-                        dbo.collection('users').findOne({providerId: req.body.providerId}).toArray((err, result2) => {
+                        dbo.collection('users').find({providerId: req.body.providerId}).toArray((err, result2) => {
                             if (result2 && result2.length > 0) {
                                 res.status(200).send({ok: false, message: "Provider user account already exists"});
                                 db.close();
                             }
                             else {
                                 userDoc = Object.assign(userDoc, {
-                                    providerId: req.body.providerId
+                                    providerId: req.body.providerId,
+                                    verified: true,
+                                    verifyId: ''
                                 });
                                 dbo.collection('users').insertOne(userDoc, (err,result) => {
                                     if (err) throw err;
-                                    let transporter =  nodemailer.createTransport(smtpTransport({
-                                        service: 'gmail',
-                                        host: 'smtp.gmail.com',
-                                        auth: {
-                                          user: 'whiskerdevs@gmail.com',
-                                          pass: 'ckhshfqjmofjskoi'
-                                        }
-                                      }));
-                                      let mailOptions = {
-                                        from: 'Whisker <no-reply@whiskerapp.org>',
-                                        to: req.body.email,
-                                        subject: 'Verify your Whisker Provider Account',
-                                        html: fs.readFileSync('./verifyEmail.html', { encoding: 'utf-8'}).replace('VERIFYURL', 'https://www.whiskerapp.org/verify?vid=' + verifyId)
-                                        .replace('FIRSTNAME', userDoc.firstname).replace('LASTNAME', userDoc.lastname)
-                                      };
-                                      transporter.sendMail(mailOptions, function(error, info){
-                                        if (error) {
-                                            res.status(404).send({ success: false, message: "Error connecting to mail server!" });
-                                        } else {
-                                            res.status(200).send({ success: true });
-                                        }
-                                        res.end();
-                                      });
+                                    res.status(200).send({ success: true });
                                     db.close();
                                 });
                             }  
