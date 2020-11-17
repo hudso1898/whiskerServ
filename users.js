@@ -487,6 +487,7 @@ app.post('/oauthLogin', (req,res) => {
                     }
                     dbo.collection('users').insertOne(userDoc, (err,result) => {
                         if (err) throw err;
+			let user = (result && result.length > 0) ? result[0] : {};
                             res.status(200).send({valid: true, username: user.username, firstname: user.firstname, lastname: user.lastname, id: user.id, sessionId: sessionId, expDate: expDate});
                             db.close();
                     });
