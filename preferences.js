@@ -54,6 +54,36 @@ function preferences(app, dbName, uri) {
             });
         });
     })
+
+
+
+    // app.post('/preferences', (req,res) => {
+    //     if (!req.body || !req.body.uid || !req.body.sid || !req.body.preferences) {
+    //         res.status(400).send({ok: false, message: "Must supply uid, sid, and preferences object"});
+    //         return;
+    //     }
+	// console.log(uri);
+    //     mongoclient.connect(uri, (err,db) => {
+    //         if (err) {
+    //             res.status(500).send({ok: false, message: "DB connection failed"});
+    //             return;
+    //         }
+	// 	var dbo = db.db(dbName);
+    //         dbo.collection('users').find({id: req.body.uid, currentSessionId: req.body.sid}).toArray((err, result) => {
+    //             if (result && result.length !== 0 && new Date(result[0].expDate).getTime() > Date.now()) {
+    //                 let user = result[0];
+    //                 dbo.collection('users').updateOne({id: req.body.uid}, {$set: { preferences: {type:{value:req.body.type,weight:req.body.weight1},color:{value:req.body.color,weight:req.body.weight2},habits:{value:req.body.habits,weight:req.body.weight3}}}}, (err, result2) => {
+    //                     res.status(200).send({ok: true});
+    //                     db.close();
+    //                 });
+    //             }
+    //             else {
+    //                 res.status(200).send({ok: false, message: "Invalid user credentials"});
+    //                 db.close();
+    //             }
+    //         });
+    //     });
+    // })
 }
 
 module.exports = {
