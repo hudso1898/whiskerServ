@@ -462,7 +462,7 @@ app.post('/oauthLogin', (req,res) => {
                     }
                     dbo.collection('users').insertOne(userDoc, (err,result) => {
                         if (err) throw err;
-                            res.status(200).send({ valid: true });
+                            res.status(200).send({valid: true, username: user.username, firstname: user.firstname, lastname: user.lastname, id: user.id, sessionId: sessionId, expDate: expDate});
                             db.close();
                     });
                 }
