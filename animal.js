@@ -15,7 +15,7 @@ function animalModule(app, dbName) {
             var dbo = db.db(dbName);
             dbo.collection('users').find({id: req.body.provId, sessionId: req.body.provSessionId}).toArray((err, results) => {
                 if (results.length > 0) {
-                    animalDoc = Object.assign(userDoc, {
+                    animalDoc = Object.assign(animalDoc, {
                         // needs: special needs for animal
                         // brand/number: microchip brand/number
                         providerId: req.body.providerId,
@@ -35,7 +35,7 @@ function animalModule(app, dbName) {
                         status:req.body.status,
                         needs:req.body.needs
                     });
-                    dbo.collection('animals').insertOne(userDoc, (err,result) => {
+                    dbo.collection('animals').insertOne(animalDoc, (err,result) => {
                         if (err) throw err;
                         res.status(200).send({ success: true });
                         db.close();
