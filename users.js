@@ -275,6 +275,31 @@ app.post('/apply/provider/deny', (req,res) => {
         }
     });
 });
+app.post('/verifyUser', (req,res) => {
+    mongoclient.connect(uri, (err, db) => {
+        if (err) {
+            res.contentType('application/json').status(500).send('DB connection failed');
+        }
+        else {
+            var dbo = db.db('practirio');
+            let provVerifyId = req.body.verifyId;
+            dbo.collection('users').find({ verifyId: provVerifyId }).toArray((err, result) => {
+                if(result && result.length > 0) {
+                    for (let user of result) {
+                        dbo.collection('users').updateOne({verifyId: provVerifyId}, { $set: {verified: true, verifyId: ''}}, (err, result2) => {
+                            res.contentType('application/json').status(200).send({ ok: true});
+                        });
+                    }
+                }
+                else {
+                    res.contentType('application/json').status(200).send({ ok: false});
+                }
+                db.close();
+            });
+        }
+    });
+});
+
 app.post('/verifySession', (req,res) => {
     mongoclient.connect(uri, (err,db) => {
         if (err) {
