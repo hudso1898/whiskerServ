@@ -466,7 +466,7 @@ app.post('/oauthLogin', (req,res) => {
                         expDate.setTime(req.body.expires);
                         dbo.collection('users').updateOne({$or: [{id: id}, {email: req.body.email}]}, { $set: { currentSessionId: sessionId, expDate: expDate }}, (err, result) => {
                             res.writeHead(200, {ContentType: 'application/json'});
-                            res.write(JSON.stringify({valid: true, username: user.username, firstname: user.firstname, lastname: user.lastname, id: user.id, sessionId: sessionId, expDate: expDate}));
+                            res.write(JSON.stringify({valid: true, username: user.username, firstname: user.firstname, lastname: user.lastname, id: user.id, sessionId: sessionId, expDate: expDate, preferences: (user.preferences) ? user.preferences : {}, admin: (user.admin) ? user.admin : false, providerId: (user.providerId) ? user.providerId : undefined}));
                             db.close();
                             res.end();
                         });
@@ -488,7 +488,7 @@ app.post('/oauthLogin', (req,res) => {
                     dbo.collection('users').insertOne(userDoc, (err,result) => {
                         if (err) throw err;
 			let user = (result && result.length > 0) ? result[0] : {};
-                            res.status(200).send({valid: true, username: user.username, firstname: user.firstname, lastname: user.lastname, id: user.id, sessionId: sessionId, expDate: expDate});
+                            res.status(200).send({valid: true, username: user.username, firstname: user.firstname, lastname: user.lastname, id: user.id, sessionId: sessionId, expDate: expDate, preferences: (user.preferences) ? user.preferences : {}, admin: (user.admin) ? user.admin : false, providerId: (user.providerId) ? user.providerId : undefined});
                             db.close();
                     });
                 }
