@@ -281,7 +281,7 @@ app.post('/verifyUser', (req,res) => {
             res.contentType('application/json').status(500).send('DB connection failed');
         }
         else {
-            var dbo = db.db('practirio');
+            var dbo = db.db(dbName);
             let provVerifyId = req.body.verifyId;
             dbo.collection('users').find({ verifyId: provVerifyId }).toArray((err, result) => {
                 if(result && result.length > 0) {
