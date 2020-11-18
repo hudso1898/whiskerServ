@@ -72,7 +72,13 @@ function preferences(app, dbName, uri) {
     //         dbo.collection('users').find({id: req.body.uid, currentSessionId: req.body.sid}).toArray((err, result) => {
     //             if (result && result.length !== 0 ) {
     //                 let user = result[0];
-    //                 dbo.collection('users').updateOne({id: req.body.uid}, {$set: { preferences: {type:{value:req.body.type,weight:req.body.weight1},color:{value:req.body.color,weight:req.body.weight2},habits:{value:req.body.habits,weight:req.body.weight3}}}}, (err, result2) => {
+    //                 dbo.collection('users').updateOne(
+     //                             {id: req.body.uid}, 
+     //                             {$set: { 
+//                                  preferences: {
+//                                  type:{value:req.body.type,weight:req.body.weight1},
+//                                  color:{value:req.body.color,weight:req.body.weight2},
+//                                  habits:{value:req.body.habits,weight:req.body.weight3}}}}, (err, result2) => {
     //                     res.status(200).send({ok: true});
     //                     db.close();
     //                 });
