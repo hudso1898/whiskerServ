@@ -1,40 +1,31 @@
 function animalModule(app, dbName) {
     /*
     {
-        provId: string,
-        provSessionId: string,
-        animalInfo: Object (all the animal traits)
+        uid: user id,
+        sid: session id,
+        pid: provider id,
+        ...
+        animal fields 
+        ...
     }
     */
-    app.post('/animal/add', (req,res) => {
+    app.post('/add/animal', (req,res) => {
+        if (!req.body.uid || !req.body.sid || !req.body.pid) {
+            res.status(400).send('Missing request fields');
+            return;
+        }
         mongoclient.connect(uri, (err,db) => {
             if (err) {
                 res.contentType('application/json').status(500).send('DB connection failed');
                 return;
             }
             var dbo = db.db(dbName);
-            dbo.collection('users').find({id: req.body.provId, sessionId: req.body.provSessionId}).toArray((err, results) => {
+            dbo.collection('users').find({id: req.body.uid, sessionId: req.body.sid}).toArray((err, results) => {
                 if (results.length > 0) {
-                    animalDoc = Object.assign(animalDoc, {
-                        // needs: special needs for animal
-                        // brand/number: microchip brand/number
-                        providerId: req.body.providerId,
-                        animalId:idGen.generateSessionId(),
-                        name:req.body.name,
-                        brand:req.body.brand,
-                        number:req.body.number,
-                        birth:req.body.birth,
-                        gender:req.body.gender,
-                        species:req.body.species,
-                        breed:req.body.breed,
-                        color:req.body.color,
-                        size:req.body.size,
-                        weight:req.body.weight,
-                        declawed:req.body.declawed,
-                        location:req.body.location,
-                        status:req.body.status,
-                        needs:req.body.needs
-                    });
+                    animalDoc = Object.assign(req.body, {});
+                    delete animalDoc.uid;
+                    delete animalDoc.sid;
+
                     dbo.collection('animals').insertOne(animalDoc, (err,result) => {
                         if (err) throw err;
                         res.status(200).send({ success: true });
@@ -46,6 +37,28 @@ function animalModule(app, dbName) {
                     db.close();
                     res.end();
                 }
+            });
+        });
+    });
+    
+    /*
+        Get all the animals of the specified provider, return as list
+    */
+    app.get('animals/:pid', (req,res) => {
+        mongoclient.connect(uri, (err, db) => {
+            if (err) {
+                res.contentType('application/json').status(500).send('DB connection failed');
+                return;
+            }
+            var dbo = db.db(dbName);
+            dbo.collection('animals').find({pid: req.params.pid}).toArray((err, results) => {
+                if (results && results.length > 0) {
+                    res.status(200).send(results);
+                }
+                else {
+                    res.status(200).send([]);
+                }
+                db.close();
             });
         });
     });
