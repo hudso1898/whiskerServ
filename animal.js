@@ -67,6 +67,32 @@ function animalModule(app, dbName) {
             });
         });
     });
+
+    /*
+        Get a bunch of animals from the db, in pages of 50
+    */
+   app.get('animals/page/:pageNum', (req,res) => {
+    if(req.params.pageNum <= 0) {
+        res.status(400).send('Bad page num');
+        return;
+    }
+    mongoclient.connect(uri, (err, db) => {
+        if (err) {
+            res.contentType('application/json').status(500).send('DB connection failed');
+            return;
+        }
+        var dbo = db.db(dbName);
+        dbo.collection('animals').find().skip((pageNum - 1) * 100).limit(100).toArray((err, result) => {
+            if (results && results.length > 0) {
+                res.status(200).send(results);
+            }
+            else {
+                res.status(200).send([]);
+            }
+            db.close();
+        });
+    });
+   });
 }
 
 module.exports = {
