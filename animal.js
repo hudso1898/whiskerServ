@@ -71,7 +71,7 @@ function animalModule(app, dbName) {
     /*
         Get a bunch of animals from the db, in pages of 50
     */
-   app.get('animals/page/:pageNum', (req,res) => {
+   app.get('/animals/page/:pageNum', (req,res) => {
     if(req.params.pageNum <= 0) {
         res.status(400).send('Bad page num');
         return;
@@ -82,7 +82,7 @@ function animalModule(app, dbName) {
             return;
         }
         var dbo = db.db(dbName);
-        dbo.collection('animals').find().skip((pageNum - 1) * 100).limit(100).toArray((err, result) => {
+        dbo.collection('animals').find().skip((req.params.pageNum - 1) * 100).limit(100).toArray((err, results) => {
             if (results && results.length > 0) {
                 res.status(200).send(results);
             }
