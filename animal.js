@@ -1,3 +1,8 @@
+var idGen = require('./id.js');
+var mongoclient = require("mongodb").MongoClient;
+// MongoDB connection
+// syntax: mongodb://<user>:<password>@<host>/<db>
+var uri = "mongodb://whisker:whisker@127.0.0.1:27017/whisker?retryWrites=true&w=majority";
 function animalModule(app, dbName) {
     /*
     {
@@ -20,15 +25,15 @@ function animalModule(app, dbName) {
                 return;
             }
             var dbo = db.db(dbName);
-            dbo.collection('users').find({id: req.body.uid, sessionId: req.body.sid}).toArray((err, results) => {
+            dbo.collection('users').find({id: req.body.uid, currentSessionId: req.body.sid}).toArray((err, results) => {
                 if (results.length > 0) {
-                    animalDoc = Object.assign(req.body, {});
+                    animalDoc = Object.assign(req.body, {id: idGen.generateSessionId()});
                     delete animalDoc.uid;
                     delete animalDoc.sid;
 
                     dbo.collection('animals').insertOne(animalDoc, (err,result) => {
                         if (err) throw err;
-                        res.status(200).send({ success: true });
+                        res.status(200).send({ ok: true });
                         db.close();
                     });
                 }
