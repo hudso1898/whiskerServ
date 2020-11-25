@@ -49,7 +49,7 @@ function animalModule(app, dbName) {
     /*
         Get all the animals of the specified provider, return as list
     */
-    app.get('animals/:pid', (req,res) => {
+    app.get('/animals/:pid', (req,res) => {
         mongoclient.connect(uri, (err, db) => {
             if (err) {
                 res.contentType('application/json').status(500).send('DB connection failed');
