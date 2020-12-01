@@ -520,12 +520,11 @@ app.get('/get/user/:username', (req,res) => {
         }
 	});
 });
-}
 
 /*
-        Get a provider by id
-    */
-   app.get('/provider/:id', (req,res) => {
+    Get a provider by id
+*/
+app.get('/provider/:id', (req,res) => {
     mongoclient.connect(uri, (err, db) => {
         if (err) {
             res.contentType('application/json').status(500).send('DB connection failed');
@@ -543,6 +542,9 @@ app.get('/get/user/:username', (req,res) => {
         });
     });
 });
+
+}
+
 module.exports = {
     users: users
 }
