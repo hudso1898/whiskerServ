@@ -531,7 +531,7 @@ app.get('/provider/:id', (req,res) => {
             return;
         }
         var dbo = db.db(dbName);
-        dbo.collection('provider').find({id: req.params.id}).toArray((err, results) => {
+        dbo.collection('providers').find({id: req.params.id}).toArray((err, results) => {
             if (results && results.length > 0) {
                 res.status(200).send(results[0]);
             }
