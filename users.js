@@ -521,6 +521,28 @@ app.get('/get/user/:username', (req,res) => {
 	});
 });
 }
+
+/*
+        Get a provider by id
+    */
+   app.get('/provider/:id', (req,res) => {
+    mongoclient.connect(uri, (err, db) => {
+        if (err) {
+            res.contentType('application/json').status(500).send('DB connection failed');
+            return;
+        }
+        var dbo = db.db(dbName);
+        dbo.collection('provider').find({id: req.params.id}).toArray((err, results) => {
+            if (results && results.length > 0) {
+                res.status(200).send(results[0]);
+            }
+            else {
+                res.status(200).send({});
+            }
+            db.close();
+        });
+    });
+});
 module.exports = {
     users: users
 }
