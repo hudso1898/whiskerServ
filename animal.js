@@ -69,6 +69,27 @@ function animalModule(app, dbName) {
     });
 
     /*
+        Get an animal by id
+    */
+    app.get('/animal/:id', (req,res) => {
+        mongoclient.connect(uri, (err, db) => {
+            if (err) {
+                res.contentType('application/json').status(500).send('DB connection failed');
+                return;
+            }
+            var dbo = db.db(dbName);
+            dbo.collection('animals').find({id: req.params.id}).toArray((err, results) => {
+                if (results && results.length > 0) {
+                    res.status(200).send(results[0]);
+                }
+                else {
+                    res.status(200).send({});
+                }
+                db.close();
+            });
+        });
+    });
+    /*
         Get a bunch of animals from the db, in pages of 50
     */
    app.get('/animals/page/:pageNum', (req,res) => {
