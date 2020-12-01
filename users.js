@@ -145,7 +145,7 @@ app.post('/apply/provider', (req,res) => {
                           }));
                           let mailOptions = {
                             from: 'Whisker <no-reply@whiskerapp.org>',
-                            to: provApplication.email,
+                            to: [provApplication.email, provApplication.contactEmail],
                             subject: 'Provider Application Confirmation',
                             html: fs.readFileSync('./confirmApplication.html', { encoding: 'utf-8'}).replace('NAME', provApplication.name)
                           };
@@ -213,7 +213,7 @@ app.post('/apply/provider/accept', (req,res) => {
                                       }));
                                       let mailOptions = {
                                         from: 'Whisker <no-reply@whiskerapp.org>',
-                                        to: provDoc.email,
+                                        to: [provDoc.email, provDoc.contactEmail],
                                         subject: 'Your provider application has been approved!',
                                         html: fs.readFileSync('./applicationApproved.html', { encoding: 'utf-8'}).replace('NAME', provDoc.name)
                                         .replace('VERIFYURL', 'https://whiskerapp.org/register?pid=' + provDoc.id)
