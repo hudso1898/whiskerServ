@@ -394,7 +394,7 @@ app.post('/users/login', (req,res) => {
 					res.end();
 				}
 				else {
-                            let sessionId;
+                            let sessionId; 
 				if (user.currentSessionId !== undefined && user.expDate.getTime() > Date.now()) {
 					sessionId = user.currentSessionId;
 				}
@@ -411,7 +411,8 @@ app.post('/users/login', (req,res) => {
                             dbo.collection('users').updateOne({ $or: [ {username: provUsername}, {email: provUsername} ] }, { $set: { currentSessionId: sessionId, expDate: expDate }}, (err, result) => {
                                 res.writeHead(200, {ContentType: 'application/json'});
                             res.write(JSON.stringify({valid: true, username: user.username, firstname: user.firstname, lastname: user.lastname, id: user.id, sessionId: sessionId, expDate: expDate,
-                                preferences: (user.preferences) ? user.preferences : {}, admin: (user.admin) ? user.admin : false, providerId: (user.providerId) ? user.providerId : undefined, imageUrl: (user.imageUrl) ? user.imageUrl : undefined}));
+                                preferences: (user.preferences) ? user.preferences : {}, admin: (user.admin) ? user.admin : false, providerId: (user.providerId) ? user.providerId : undefined, imageUrl: (user.imageUrl) ? user.imageUrl : undefined,
+                                favorites: (user.favorites) ? user.favorites : undefined}));
                             db.close();
                             res.end();
 			    });
@@ -468,7 +469,8 @@ app.post('/oauthLogin', (req,res) => {
                         dbo.collection('users').updateOne({$or: [{id: id}, {email: req.body.email}]}, { $set: { currentSessionId: sessionId, expDate: expDate }}, (err, result) => {
                             res.writeHead(200, {ContentType: 'application/json'});
                             res.write(JSON.stringify({valid: true, username: user.username, firstname: user.firstname, lastname: user.lastname, id: user.id, sessionId: sessionId, expDate: expDate,
-                                preferences: (user.preferences) ? user.preferences : {}, admin: (user.admin) ? user.admin : false, providerId: (user.providerId) ? user.providerId : undefined, imageUrl: (user.imageUrl) ? user.imageUrl : undefined}));
+                                preferences: (user.preferences) ? user.preferences : {}, admin: (user.admin) ? user.admin : false, providerId: (user.providerId) ? user.providerId : undefined, imageUrl: (user.imageUrl) ? user.imageUrl : undefined,
+                                favorites: (user.favorites) ? user.favorites : undefined}));
                             db.close();
                             res.end();
                         });
@@ -491,7 +493,8 @@ app.post('/oauthLogin', (req,res) => {
                         if (err) throw err;
 			let user = (result && result.length > 0) ? result[0] : {};
                             res.status(200).send({valid: true, username: user.username, firstname: user.firstname, lastname: user.lastname, id: user.id, sessionId: sessionId, expDate: expDate,
-                                 preferences: (user.preferences) ? user.preferences : {}, admin: (user.admin) ? user.admin : false, providerId: (user.providerId) ? user.providerId : undefined, imageUrl: (user.imageUrl) ? user.imageUrl : undefined});
+                                 preferences: (user.preferences) ? user.preferences : {}, admin: (user.admin) ? user.admin : false, providerId: (user.providerId) ? user.providerId : undefined, imageUrl: (user.imageUrl) ? user.imageUrl : undefined,
+                                 favorites: (user.favorites) ? user.favorites : undefined});
                             db.close();
                     });
                 }
@@ -539,6 +542,48 @@ app.get('/provider/:id', (req,res) => {
                 res.status(200).send({});
             }
             db.close();
+        });
+    });
+});
+
+/*
+    Add an animal to the user's favorites
+*/
+
+app.post('/favorites/add/:aid', (req,res) => {
+    if(!req.body.uid || !req.body.sid) {
+        res.status(400).send({ok: false, message: "Must provide user credentials (uid, sid)"});
+        return;
+    }
+    mongoclient.connect(uri, (err, db) => {
+        if (err) {
+            res.contentType('application/json').status(500).send('DB connection failed');
+            return;
+        }
+        var dbo = db.db(dbName);
+        dbo.collection('users').find({id: req.body.uid, currentSessionId: req.body.sid}).toArray((err, results) => {
+            if (!results || results.length === 0) {
+                res.status(200).send({ok: false, message: "Invalid user credentials"});
+            }
+            let user = results[0];
+            if (!user.favorites || user.favorites.length === 0) {
+                dbo.collection('users').updateOne({id: req.body.uid}, {$set: {favorites: [req.params.aid]}}, (e, ok) => {
+                    res.status(200).send({ok: true});
+                    db.close();
+                });
+            }
+            else {
+                if (user.favorites.findIndex((elem) => {return (elem === req.params.aid)}) !== -1) {
+                    res.status(200).send({ok: false, message: "animal is already a favorite"});
+                    db.close();
+                }
+                else {
+                    dbo.collection('users').updateOne({id: req.body.uid}, {$push: {favorites: req.params.aid}}, (e, ok) => {
+                        res.status(200).send({ok: true});
+                        db.close();
+                    })
+                }
+            }
         });
     });
 });
